@@ -98,8 +98,8 @@ class VisionTransformer(nn.Module):
         self.patch_size = patch_size
         
         self.image_patches = ImagePatching(in_channels, embed_dim, self.patch_size)
-        self.pos_embed = nn.Parameter(torch.zeros(1, num_patches + 1, embed_dim))
-        self.class_embed = nn.Parameter(torch.zeros(1, 1, embed_dim))
+        self.pos_embedding = nn.Parameter(torch.randn(1, num_patches + 1, embed_dim))
+        self.class_embed = nn.Parameter(torch.randn(1, 1, embed_dim))
         
         nn.init.trunc_normal_(self.pos_embed, std=0.2)
         nn.init.trunc_normal_(self.class_embed, std=0.2)
@@ -108,6 +108,7 @@ class VisionTransformer(nn.Module):
         self.transformer = Transformer(depth, embed_dim, n_heads, ff_ratio, drop_rate)
         self.normalize = nn.LayerNorm(embed_dim)
         self.output_layer = nn.Linear(embed_dim, num_classes)
+        self.latent = nn.Identity()
         
         self.apply(self._init_weights)
         
@@ -120,16 +121,19 @@ class VisionTransformer(nn.Module):
         elif isinstance(v, nn.LayerNorm):
             nn.init.constant_(v.bias, 0)
             nn.init.constant_(v.weight, 1.0)
+            
     
     def forward(self, x):
-        b = x.shape[0]
-        class_token = self.class_embed.expand(b, -1, -1)
+        b, c, _ = x.shape
+        # class_token = self.class_embed.expand(b, -1, -1)
+        class_tokens = repeat(self.class_embed, '1 1 d -> b 1 d', b=b)
         
         x = self.image_patches(x)
-        x = torch.cat((class_token, x), dim=1)
-        x += self.pos_embed
+        x = torch.cat((class_tokens, x), dim=1)
+        x += self.pos_embedding[:, : (c + 1)]
         x = self.transformer(self.drop(x))
         x = self.normalize(x)
+        x = self.latent(x)
         
         x_out = self.output_layer(x[:, 0])
         
