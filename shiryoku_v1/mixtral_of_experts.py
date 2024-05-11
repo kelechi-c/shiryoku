@@ -21,11 +21,11 @@ class RouterGate(nn.Module):
     def __init__(self, model_dim, n_experts):
         super().__init__()
         self.route_layer = nn.Linear(model_dim, n_experts)
-        
+
     def forward(self, x):
-        
-        routed_x = torch.nn.functional.softmax(self.route_layer(x), dim=-1)
-        
+        x = self.route_layer(x)
+        routed_x = torch.nn.functional.softmax(x, dim=-1)
+
         return routed_x
 
 
@@ -51,4 +51,3 @@ class MixtralOfExpertsLayer(nn.Module):
         output_logits = torch.einsum('bte,bteo->bto', gating_scores, expert_outputs)
         
         return output_logits 
-        

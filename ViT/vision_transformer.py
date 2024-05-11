@@ -1,7 +1,6 @@
 import torch 
 import torch.nn as nn
-from einops import rearrange, repeat
-from transformers import SiglipVisionModel, SiglipTextModel, SiglipModel
+from einops import repeat
 
 class FeedForwardLayer(nn.Module):
     def __init__(self, in_features, hidden_features, out_features, dropout=0.0):
