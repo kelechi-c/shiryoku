@@ -6,4 +6,6 @@ class Config:
     momentum = 0.9
     batch_size = 64
     top_k = 2
+    num_experts = 4
+    image_size = 224
     
