@@ -1,15 +1,13 @@
-from altair import Data
 import torch
+from nltk import tokenize
 from torch.utils.data import Dataset, DataLoader, random_split
-from datasets import load_dataset, Image
-from utils_functions import read_img, tokenize_text, get_dataset
+from utils_functions import read_img, tokenize_text, get_dataset, get_moondream_dataset
 from config import Config
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-train_images, train_captions = get_dataset('train')
-valid_images, valid_captions = get_dataset('test')
+images, captions = get_moondream_dataset()
 
 
 class ImageCaptionData(Dataset):
@@ -32,8 +30,12 @@ class ImageCaptionData(Dataset):
         return image, caption
 
 
-train_dataset = ImageCaptionData(images=train_images, captions=train_captions, device=device)
-valid_dataset = ImageCaptionData(images=valid_images, captions=valid_captions, device=device)
+dataset = ImageCaptionData(images=images, captions=captions, device=device)
 
-train_loader = DataLoader(train_dataset, batch_size=Config.batch_size, shuffle=True)
-valid_loader = DataLoader(valid_dataset, batch_size=Config.batch_size, shuffle=False)
+train_size = 0.8 * len(dataset)
+val_size = len(dataset) - train_size
+
+train_data, valid_data = random_split(dataset, (train_size, val_size))
+
+train_loader = DataLoader(train_data, batch_size=Config.batch_size, shuffle=True)
+valid_loader = DataLoader(valid_data, batch_size=Config.batch_size, shuffle=False)
