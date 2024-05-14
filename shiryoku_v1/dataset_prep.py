@@ -32,7 +32,7 @@ class ImageCaptionData(Dataset):
 
 dataset = ImageCaptionData(images=images, captions=captions, device=device)
 
-train_size = 0.8 * len(dataset)
+train_size = 0.95 * len(dataset)
 val_size = len(dataset) - train_size
 
 train_data, valid_data = random_split(dataset, (train_size, val_size))
