@@ -8,4 +8,5 @@ class Config:
     top_k = 2
     num_experts = 4
     image_size = 224
+    train_size = 0.95
     

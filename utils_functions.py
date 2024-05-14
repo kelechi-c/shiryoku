@@ -1,12 +1,12 @@
 import cv2
 from transformers import AutoTokenizer
-from tokenizers import Tokenizer
 from datasets import load_dataset, Image
 import requests
 import PIL.Image as pillow_image
+from nltk import tokenize
 
-
-tokenizer = AutoTokenizer.from_pretrained("google/siglip-base-patch16-224")
+tokenizer = tokenize.
+# tokenizer = AutoTokenizer.from_pretrained("google/siglip-base-patch16-224")
 
 def read_img(image_file):
     image = cv2.imread(image_file)
