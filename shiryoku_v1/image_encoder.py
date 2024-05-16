@@ -1,6 +1,7 @@
+from networkx import rescale_layout
 import torch.nn as nn
 import torch 
-from torchvision.models import resnet152
+from torchvision import models
 
 class ConvNetEncoder(nn.Module):
     def __init__(self):
@@ -24,3 +25,23 @@ class ConvNetEncoder(nn.Module):
         encoded_image = self.conv_net(image)
 
         return encoded_image
+
+
+class PretrainedConvNet(nn.Module):
+    def __init__(self, embed_size):
+        super().__init__()
+        resnet = models.resnet152(pretrained=True)
+        resnet_modules = list(resnet.children())[:-1]
+        
+        self.resnet = nn.Sequential(*resnet_modules)
+        self.linear = nn.Linear(resnet.fc.in_features, embed_size)
+        self.batch_norm = nn.BatchNorm1d(embed_size, momentum=0.01)
+    
+    def forward(self, images):
+        with torch.no_grad():
+            features = self.resnet(images)
+        
+        features = features.reshape(features.size(0), -1)
+        features = self.batch_norm(self.linear(features))
+        
+        return features 
