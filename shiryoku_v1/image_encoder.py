@@ -1,4 +1,3 @@
-from networkx import rescale_layout
 import torch.nn as nn
 import torch 
 from torchvision import models

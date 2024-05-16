@@ -10,18 +10,18 @@ from config import Config
 from utils_functions import *
 
 
-class ModalityFusion(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.vision_encoder = ConvNetEncoder()
-        self.text_embedding = TextRNNDecoder()
+# class ModalityFusion(nn.Module):
+#     def __init__(self):
+#         super().__init__()
+#         self.vision_encoder = ConvNetEncoder()
+#         self.text_embedding = TextRNNDecoder()
 
-    def forward(self, x):
-        visual_tokens = self.vision_encoder(x)
-        text_tokens = self.text_embedding(x)
+#     def forward(self, x):
+#         visual_tokens = self.vision_encoder(x)
+#         text_tokens = self.text_embedding(x)
         
-        token_fusion = torch.cat((visual_tokens, text_tokens), dim=1) 
+#         token_fusion = torch.cat((visual_tokens, text_tokens), dim=1) 
         
-        return token_fusion
+#         return token_fusion
     
 

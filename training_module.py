@@ -1,4 +1,3 @@
-from re import T
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -9,6 +8,7 @@ from shiryoku_v1.image_encoder import ConvNetEncoder, PretrainedConvNet
 from shiryoku_v1.text_model import TextRNNDecoder
 from config import Config
 from tqdm.auto import tqdm
+import os
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -38,8 +38,10 @@ def training_loop(train_loader, lossfn, optimizer, epochs=epochs):
             optimizer.step()
 
             print(f'Epoch {epoch} of {epochs}, loss: {loss.item():.4f}')
-            
-        print(f"Epoch {epoch} complete")
 
-def validate_step(model, valid_loader, lossfn, optimizer, config):
-    return 
+        print(f"End metrics for {epoch} of {epochs}, loss: {loss.item():.4f}")
+
+        torch.save(decoder.state_dict(), os.path.join(Config.model_output_path, f'decoder_{epoch}.pth'))
+        torch.save(encoder.state_dict(), f"encoder_{epoch}.pth")
+
+        print(f"Epoch {epoch} complete")
