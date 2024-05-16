@@ -1,7 +1,7 @@
 class Config:
-    epochs = 30
-    model_output_path = 'shiryoku_vlm'
-    model_filename = 'shiryoku.pth'
+    num_epochs = 30
+    model_output_path = 'shiryoku_icm'
+    model_filename = 'shiryoku_vision.pth'
     lr = 0.01
     momentum = 0.9
     batch_size = 64
@@ -9,4 +9,7 @@ class Config:
     num_experts = 4
     image_size = 224
     train_size = 0.95
+    embed_size = 512
+    hidden_size = 1024
+    vocab_size = 50000
     
