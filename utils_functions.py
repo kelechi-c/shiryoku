@@ -62,11 +62,7 @@ def load_image(url, output_path=None):
             img.save(output_path, 'JPEG')
             return img
         
-        except OSError:
-            print(f"Error converting image: {image}")
-            return None
-        
-        except:
+        except Exception as e:
             print(f"Error loading image: {url}")
             return None
         
@@ -109,28 +105,28 @@ def create_vocabulary(text_dataset):
 
 
 # for fetching the required datasets
-def get_dataset(data_split):
-    docci_dataset = load_dataset("google/docci")
+# def get_dataset(data_split):
+#     docci_dataset = load_dataset("google/docci")
 
-    data = docci_dataset[data_split]  # type: ignore
+#     data = docci_dataset[data_split]  # type: ignore
 
-    image = data["image"] 
-    descriptions = data["description"] 
+#     image = data["image"] 
+#     descriptions = data["description"]
 
-    images = [Image(x) for x in image]
-    img_captions = [caption for caption in descriptions]
+#     images = [Image(x) for x in image]
+#     img_captions = [caption for caption in descriptions]
     
-    return images, img_captions
+#     return images, img_captions
 
 
 def get_moondream_dataset():
     moondream_dataset = load_dataset("isidentical/moondream2-coyo-5M-captions")
     md_data = moondream_dataset['train'] # type: ignore
-    
-    image_urls = md_data['url'] # type: ignore
-    descriptions = md_data['moondream2_caption'] # type: ignore
-    
-    images = [get_image_from_url(img_url) for img_url in image_urls]
+
+    image_urls = md_data["url"][:1000000]  # type: ignore
+    descriptions = md_data["moondream2_caption"][:1000000]  # type: ignore
+
+    images = [load_image(img_url) for img_url in image_urls]
     captions = [caption for caption in descriptions]
-    
+
     return images, captions
