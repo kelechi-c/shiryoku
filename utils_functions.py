@@ -7,6 +7,7 @@ import PIL.Image as pillow_image
 from nltk import tokenize
 from torchvision import transforms
 import re
+from io import BytesIO
 from collections import Counter
 from config import Config
 
@@ -40,8 +41,37 @@ def get_image_from_url(url):
         return image
     except Exception as e:
         print(e)
+
+def load_image(url, output_path=None):
+    try:
+        # Attempt to load image from URL
+        url_content = requests.get(url, stream=True).raw
+        image = pillow_image.open(url_content)
+
+        # response = requests.get(data)
+        # image = pillow_image.open(BytesIO(response.content))
+    except:
+        try:
+            # Attempt to load image from raw data
+            image = requests.get(url, stream=True).raw
+            img = pillow_image.open(image)
+            img = img.convert('RGB')  # Ensure RGB mode for consistent conversion
+            if not output_path:
+                output_path = f"{image.rsplit('.', 1)[0]}.jpeg"
+                
+            img.save(output_path, 'JPEG')
+            return img
         
-    
+        except OSError:
+            print(f"Error converting image: {image}")
+            return None
+        
+        except:
+            print(f"Error loading image: {url}")
+            return None
+        
+    print(f'success loading {url}')
+    return image    
 
 
 # For text data
@@ -76,7 +106,6 @@ def create_vocabulary(text_dataset):
     idx_to_word = {idx: word for idx, word in enumerate(vocab)}
 
     return word_to_idx, idx_to_word
-
 
 
 # for fetching the required datasets
