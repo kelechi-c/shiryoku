@@ -16,8 +16,11 @@ print(f'Captions: {len(captions)}')
 
 captions_vocab = create_vocabulary(captions)
 
+captions_vocab = captions_vocab[0]
+
+
 class ImageCaptionData(Dataset):
-    def __init__(self, images, captions, transforms, device):
+    def __init__(self, images, captions, transforms=None, device=device):
         super().__init__()
         self.images = images
         self.captions = captions
@@ -29,7 +32,14 @@ class ImageCaptionData(Dataset):
 
     def __getitem__(self, idx):
 
-        image = read_img(self.images[idx])
+        # image = read_img(self.images[idx])
+        try:
+            image = read_img(self.images[idx])
+        except Exception as e:
+            print(f"Error reading image at index {idx}: {e}")
+            return None, None, None
+        
+        
         if self.transform:
             image = self.transform(image)
             
@@ -38,13 +48,16 @@ class ImageCaptionData(Dataset):
         caption = tokenize_text(self.captions[idx])
         
         caption = torch.tensor(caption).to(self.device)
+        
+        length = len(caption)
+        
+        return image, caption, length
 
-        return image, caption
 
 
-dataset = ImageCaptionData(images=images, captions=captions_vocab, transforms=image_transforms, device=device)
+dataset = ImageCaptionData(images=images, captions=captions)
 
-train_size = 0.95 * len(dataset)
+train_size = 0.90 * len(dataset)
 val_size = len(dataset) - train_size
 
 train_data, valid_data = random_split(dataset, (train_size, val_size))

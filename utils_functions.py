@@ -9,6 +9,7 @@ import re
 from collections import Counter
 from tqdm.auto import tqdm
 from config import Config
+import numpy as np
 
 
 # For image data
@@ -25,11 +26,31 @@ def image_transforms():
     return trasnformed_image
 
 
-def read_img(image_file):
-    image = cv2.imread(image_file)
-    image = cv2.resize(image, (224, 224))
+# def read_img(image_file):
+#     image = cv2.imread(image_file)
+#     image = cv2.resize(image, (224, 224))
+#     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+#     image = image.transpose(2, 0, 1)
+#     return image
+
+
+def read_img(image_data):
+    if isinstance(image_data, str):
+        # Assume image_data is a file path
+        image = cv2.imread(image_data)
+    elif isinstance(image_data, bytes):
+        # Assume image_data is binary data
+        image = cv2.imdecode(np.frombuffer(image_data, np.uint8), cv2.IMREAD_COLOR)
+    elif isinstance(image_data, pillow_image.Image):
+        # Assume image_data is a PIL Image object
+        image = cv2.cvtColor(np.array(image_data), cv2.COLOR_RGB2BGR)
+        
+    if image is None:
+        raise ValueError("Could not read the image data.")
+
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    image = image.transpose(2, 0, 1)
+    image = cv2.resize(image, (224, 224))
+    image = np.array(image, dtype=np.float32) / 255.0  # Normalize the image
     return image
 
 
@@ -42,7 +63,7 @@ def get_image_from_url(url):
         print(e)
 
 
-def load_image(url, output_path=None):
+def load_image(url):
     try:
         # Attempt to load image from URL
         url_content = requests.get(url, stream=True).raw
