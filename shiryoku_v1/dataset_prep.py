@@ -3,13 +3,16 @@ import re
 from collections import Counter
 from nltk import tokenize
 from torch.utils.data import Dataset, DataLoader, random_split
-from utils_functions import read_img, tokenize_text, get_moondream_dataset, image_transforms
+from utils_functions import read_img, tokenize_text, load_image_captions, image_transforms
 from config import Config
 from utils_functions import *
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-images, captions = get_moondream_dataset()
+images, captions = zip(*load_image_captions())
+
+print(f'Images: {len(images)}')
+print(f'Captions: {len(captions)}')
 
 captions_vocab = create_vocabulary(captions)
 
