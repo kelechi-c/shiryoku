@@ -31,7 +31,6 @@ class ImageCaptionData(Dataset):
 
     def __getitem__(self, idx):
         # Images
-        # image = read_img(self.images[idx])
         try:
             image = read_img(self.images[idx])
         except Exception as e:

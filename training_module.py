@@ -64,6 +64,8 @@ def validation_step(model, valid_loader):
     
     with torch.no_grad():  
         for _, (images, captions, lengths) in tqdm(enumerate(valid_loader)):
+            images = images.to(device)
+            captions = captions.to(device)
             targets = pack_padded_sequence(captions, lengths, batch_first=True)[0]
 
         # Update the running total of correct predictions and samples

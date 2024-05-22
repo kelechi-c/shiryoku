@@ -26,14 +26,6 @@ def image_transforms():
     return trasnformed_image
 
 
-# def read_img(image_file):
-#     image = cv2.imread(image_file)
-#     image = cv2.resize(image, (224, 224))
-#     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-#     image = image.transpose(2, 0, 1)
-#     return image
-
-
 def read_img(image_data):
     if isinstance(image_data, str):
         # Assume image_data is a file path
@@ -52,15 +44,6 @@ def read_img(image_data):
     image = cv2.resize(image, (224, 224))
     image = np.array(image, dtype=np.float32) / 255.0  # Normalize the image
     return image
-
-
-def get_image_from_url(url):
-    try:
-        url_content = requests.get(url, stream=True).raw
-        image = pillow_image.open(url_content)
-        return image
-    except Exception as e:
-        print(e)
 
 
 def load_image(url):
@@ -129,6 +112,7 @@ def load_image_captions():
             caption = desc.lower()
             if image is not None:
                 data.append((image, caption))
+                
         except Exception as e:
             print(f"Error loading image/caption: {image_url} + {e}")
             continue
