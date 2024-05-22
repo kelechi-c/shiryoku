@@ -16,7 +16,7 @@ class TextRNNDecoder(nn.Module):
 
     def forward(self, features, captions, lengths):
         text_embed = self.embed(captions)
-        embeddings = torch.cat((features.unsqueeze(1), text_embed), dim=2)
+        embeddings = torch.cat((features.unsqueeze(1), text_embed), dim=1)
         packed = pack_padded_sequence(embeddings, lengths, batch_first=True)
         hidden, _ = self.lstm(packed)
         rnn_output = self.linear(hidden[0])
