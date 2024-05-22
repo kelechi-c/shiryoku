@@ -1,3 +1,4 @@
+from logging import config
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -7,16 +8,21 @@ from shiryoku_v1.dataset_prep import train_loader, valid_loader
 from shiryoku_v1.image_encoder import ConvNetEncoder, PretrainedConvNet
 from shiryoku_v1.text_model import TextRNNDecoder
 from utils_functions import *
-from config import Config
+from config import Config, wandb_config
 from tqdm.auto import tqdm
 import os
-import warnings
+import wandb
 
+wandb.login()
+
+wandb.init(project="shiryoku_vision", config=wandb_config)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 shiryoku_model = ImageTextModel()
+shiryoku_model = shiryoku_model.to(device)
 
+wandb.watch(shiryoku_model, log_freq=10)
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(params=shiryoku_model.parameters(), lr=Config.lr)
@@ -55,7 +61,7 @@ def validation_step(model, valid_loader):
     model.eval() 
     
     with torch.no_grad():  
-        for _, (images, captions, lengths) in valid_loader:
+        for _, (images, captions, lengths) in tqdm(enumerate(valid_loader)):
             targets = pack_padded_sequence(captions, lengths, batch_first=True)[0]
             
             outputs = model(images, captions, lengths)
@@ -65,34 +71,22 @@ def validation_step(model, valid_loader):
     
     return val_loss
 
-def training_loop(model, train_loader, lossfn, optimizer, epochs=epochs):
+def training_loop(model, train_loader, valid_loader, epochs=epochs):
+
     for epoch in tqdm(range(epochs)):
         print(f'Training epoch {epoch}')
         train_acc, train_loss = train_step(train_loader, model)
         valid_loss = validation_step(model, valid_loader)
-            
-        model.eval() 
-        
-            # Set the model to evaluation mode
-        with torch.no_grad():  # Disable gradient computation
-            for _, (images, captions, lengths) in valid_loader:
-                targets = pack_padded_sequence(captions, lengths, batch_first=True)[0]
-                
-                outputs = model(images, captions, lengths)
-                loss = lossfn(outputs, targets)
-                val_loss += loss.item()
 
-
-            print(f'Epoch {epoch} of {epochs}, val_loss: {loss.item():.4f}')
+        print(f'Epoch {epoch} of {epochs}, val_loss: {train_loss.item():.4f}')
 
         torch.save(model.state_dict(), os.path.join(Config.model_output_path, f'caption_model_{epoch}.pth'))
-        print(f"End metrics for run of {epochs}, accuracy: {train_acc:.2f}, train_loss: {train_loss.item():.4f}, valid_loss: {valid_loss:.4f}")
 
-        torch.save(model.state_dict(), os.path.join(Config.model_output_path, f'{Config.model_filename}'))
+        wandb.log({"accuracy": train_acc, "loss": train_loss, "val_loss": valid_loss})
+        print(f"Epoch {epoch} complete!")
 
-        print(f"Epoch {epoch} complete")
+    print(f"End metrics for run of {epochs}, accuracy: {train_acc:.2f}, train_loss: {train_loss.item():.4f}, valid_loss: {valid_loss:.4f}")
+    torch.save(model.state_dict(), os.path.join(Config.model_output_path, f'{Config.model_filename}'))
 
 
-
-
-training_loop(shiryoku_model,train_loader, criterion, optimizer)
+training_loop(shiryoku_model,train_loader, criterion)
