@@ -2,3 +2,4 @@
 ViT/sample_vit.py
 ignore
 .vscode
+.env
