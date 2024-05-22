@@ -2,83 +2,97 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.nn.utils.rnn import pack_padded_sequence
+from shiryoku_v1.shiryoku_model import ImageTextModel
 from shiryoku_v1.dataset_prep import train_loader, valid_loader
-from utils_functions import *
 from shiryoku_v1.image_encoder import ConvNetEncoder, PretrainedConvNet
 from shiryoku_v1.text_model import TextRNNDecoder
+from utils_functions import *
 from config import Config
 from tqdm.auto import tqdm
 import os
+import warnings
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-encoder = PretrainedConvNet(embed_size=Config.embed_size)
-decoder = TextRNNDecoder(vocab_size=Config.vocab_size, embed_dim=Config.embed_size, hidden_size=Config.hidden_size)
+shiryoku_model = ImageTextModel()
+
+
 criterion = nn.CrossEntropyLoss()
-parameters = list(decoder.parameters()) + list(encoder.linear.parameters()) + list(encoder.batch_norm.parameters())
-optimizer = optim.Adam(params=parameters, lr=Config.lr)
+optimizer = optim.Adam(params=shiryoku_model.parameters(), lr=Config.lr)
 epochs = Config.num_epochs
 
-def training_loop(train_loader, lossfn, optimizer, epochs=epochs):
+
+def train_step(train_loader, model):
+    total_correct = 0
+    total_samples = 0
+    
+    for _, (images, captions, lengths) in tqdm(enumerate(train_loader)):
+        
+        images = images.to(device)
+        captions = captions.to(device)
+        targets = pack_padded_sequence(captions, lengths, batch_first=True)[0]
+        
+        model_outputs = model(images, captions, lengths)
+        
+        _, predicted = torch.max(model_outputs, 1)
+
+        # Update the running total of correct predictions and samples
+        total_correct += (predicted == targets).sum().item()
+        total_samples += targets.size(0)
+        
+        accuracy = 100 * total_correct / total_samples
+        train_loss = criterion(model_outputs, targets)
+        
+        model.zero_grad()
+        train_loss.backwards()
+        optimizer.step()
+    
+    return accuracy, train_loss
+
+def validation_step(model, valid_loader):
+    val_loss = 0.0
+    model.eval() 
+    
+    with torch.no_grad():  
+        for _, (images, captions, lengths) in valid_loader:
+            targets = pack_padded_sequence(captions, lengths, batch_first=True)[0]
+            
+            outputs = model(images, captions, lengths)
+            loss = criterion(outputs, targets)
+            val_loss += loss.item()
+    
+    
+    return val_loss
+
+def training_loop(model, train_loader, lossfn, optimizer, epochs=epochs):
     for epoch in tqdm(range(epochs)):
         print(f'Training epoch {epoch}')
-        for _, (images, captions, lengths) in tqdm(enumerate(train_loader)):
-            images = images.to(device)
-            captions = captions.to(device)
-            targets = pack_padded_sequence(captions, lengths, batch_first=True)[0]
-
-            features = encoder(images)
-            outputs = decoder(features, captions, lengths)
-            loss = lossfn(outputs, targets)
-
-            decoder.zero_grad()
-            encoder.zero_grad()
-            loss.backwards()
-            optimizer.step()
+        train_acc, train_loss = train_step(train_loader, model)
+        valid_loss = validation_step(model, valid_loader)
             
-            val_loss = 0.0
-            
-            encoder.eval()
-            decoder.eval()  
+        model.eval() 
+        
             # Set the model to evaluation mode
         with torch.no_grad():  # Disable gradient computation
-            for inputs, labels in valid_loader:
-                features = encoder(images)
-                outputs = decoder(features, captions, lengths)
+            for _, (images, captions, lengths) in valid_loader:
+                targets = pack_padded_sequence(captions, lengths, batch_first=True)[0]
+                
+                outputs = model(images, captions, lengths)
                 loss = lossfn(outputs, targets)
                 val_loss += loss.item()
 
 
-            print(f'Epoch {epoch} of {epochs}, loss: {loss.item():.4f}')
+            print(f'Epoch {epoch} of {epochs}, val_loss: {loss.item():.4f}')
 
-        print(f"End metrics for {epoch} of {epochs}, loss: {loss.item():.4f}")
+        torch.save(model.state_dict(), os.path.join(Config.model_output_path, f'caption_model_{epoch}.pth'))
+        print(f"End metrics for run of {epochs}, accuracy: {train_acc:.2f}, train_loss: {train_loss.item():.4f}, valid_loss: {valid_loss:.4f}")
 
-        torch.save(decoder.state_dict(), os.path.join(Config.model_output_path, f'decoder_{epoch}.pth'))
-        torch.save(encoder.state_dict(), f"encoder_{epoch}.pth")
+        torch.save(model.state_dict(), os.path.join(Config.model_output_path, f'{Config.model_filename}'))
 
         print(f"Epoch {epoch} complete")
 
-def validation_loop(valid_loader, lossfn):
-    for epoch in tqdm(range(epochs)):
-        print(f'Validation epoch {epoch}')
-        for _, (images, captions, lengths) in tqdm(enumerate(valid_loader)):
-            images = images.to(device)
-            captions = captions.to(device)
-            targets = pack_padded_sequence(captions, lengths, batch_first=True)[0]
 
-            features = encoder(images)
-            outputs = decoder(features, captions, lengths)
-            loss = lossfn(outputs, targets)
 
-            decoder.zero_grad()
-            encoder.zero_grad()
-            loss.backwards()
-            optimizer.step()
 
-            print(f'Validating {epoch} of {epochs}, loss: {loss.item():.4f}')
-
-        print(f"End metrics for {epoch} of {epochs}, loss: {loss.item():.4f}")
-        
-
-training_loop(train_loader, criterion, optimizer)
+training_loop(shiryoku_model,train_loader, criterion, optimizer)
