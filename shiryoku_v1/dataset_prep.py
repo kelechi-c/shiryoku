@@ -1,9 +1,7 @@
 import torch
-import re
-from collections import Counter
-from nltk import tokenize
+from einops import rearrange
 from torch.utils.data import Dataset, DataLoader, random_split
-from utils_functions import read_img, tokenize_text, load_image_captions, image_transforms
+from utils_functions import read_img, tokenize_text, load_image_captions
 from config import Config
 from utils_functions import *
 
@@ -20,18 +18,19 @@ captions_vocab = captions_vocab[0]
 
 
 class ImageCaptionData(Dataset):
-    def __init__(self, images, captions, transforms=None, device=device):
+    def __init__(self, images, captions, captions_vocab=captions_vocab, transforms=None, device=device):
         super().__init__()
         self.images = images
         self.captions = captions
         self.transform = transforms
         self.device = device
+        self.vocab = captions_vocab
 
     def __len__(self):
         return len(self.images)
 
     def __getitem__(self, idx):
-
+        # Images
         # image = read_img(self.images[idx])
         try:
             image = read_img(self.images[idx])
@@ -39,14 +38,22 @@ class ImageCaptionData(Dataset):
             print(f"Error reading image at index {idx}: {e}")
             return None, None, None
         
-        
         if self.transform:
             image = self.transform(image)
             
+        # print(f"B4 tensorizing: {image.shape}")
+        torch.from_numpy(image)
         image = torch.tensor(image, dtype=torch.float32).to(self.device)
+        image = rearrange(image, "h w c -> c h w")
+        # print(f"After tensorizing: {image.shape}")
         
-        caption = tokenize_text(self.captions[idx])
-        
+        # caption
+        vocab = self.vocab
+        caption = []
+        caption_tokens = tokenize_text(self.captions[idx])
+        caption.append(vocab('<start>'))
+        caption.append([vocab(token) for token in caption_tokens])
+        caption.append(vocab('<end>'))
         caption = torch.tensor(caption).to(self.device)
         
         length = len(caption)
