@@ -11,6 +11,7 @@ from tqdm.auto import tqdm
 import os
 
 import wandb
+
 wandb.login()
 
 wandb.init(project="shiryoku_vision", config=wandb_config)
@@ -27,6 +28,9 @@ optimizer = optim.Adam(params=shiryoku_model.parameters(), lr=Config.lr)
 epochs = Config.num_epochs
 
 os.mkdir(Config.model_output_path)
+
+output_path = os.path.join(os.getcwd(), Config.model_output_path)
+
 
 def train_step(train_loader, model):
     total_correct = 0
@@ -94,7 +98,15 @@ def training_loop(model, train_loader, valid_loader, epochs=epochs):
             f"Epoch {epoch} of {epochs}, train_accuracy: {train_acc:.2f}, train_loss: {train_loss.item():.4f}, valid_accuracy: {valid_acc:.2f}, val_loss: {train_loss.item():.2f}"
         )
 
-        torch.save(model.state_dict(), os.path.join(os.getcwd(), Config.model_output_path, f'caption_model_{epoch}.pth'))
+        checkpoint = {
+            "epoch": epoch,
+            "model_state_dict": model.state_dict(),
+            "optimizer_state_dict": optimizer.state_dict(),
+        }
+        
+        if epoch % 5 == 0: 
+            torch.save(checkpoint, os.path.join(output_path, f'caption_model_{epoch}.pth'))
+            print(f'Saved model checkpoint @ epoch {epoch}')
 
         wandb.log({"accuracy": train_acc, "loss": train_loss, "valid_accuracy": valid_acc, "val_loss": valid_loss})
         print(f"Epoch {epoch} complete!")
@@ -102,8 +114,8 @@ def training_loop(model, train_loader, valid_loader, epochs=epochs):
     print(
         f"End metrics for run of {epochs}, accuracy: {train_acc:.2f}, train_loss: {train_loss.item():.4f},valid_accuracy: {valid_acc:.2f}, valid_loss: {valid_loss:.4f}"
     )
-    
-    torch.save(model.state_dict(), os.path.join(os.getcwd(), Config.model_output_path, f'{Config.model_filename}'))
+
+    torch.save(model.state_dict(), os.path.join(output_path, f'{Config.model_filename}'))
 
 
 training_loop(shiryoku_model, train_loader, valid_loader)
