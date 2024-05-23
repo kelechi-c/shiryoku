@@ -16,6 +16,8 @@ captions_vocab = create_vocabulary(captions)
 
 captions_vocab = captions_vocab[0]
 
+vocab_size = len(captions_vocab)
+
 
 class ImageCaptionData(Dataset):
     def __init__(self, images, captions, captions_vocab=captions_vocab, transforms=None, device=device):

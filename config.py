@@ -11,7 +11,6 @@ class Config:
     train_size = 0.95
     embed_size = 512
     hidden_size = 1024
-    vocab_size = 50000
     
 wandb_config = {
     'num_epochs': 30,
