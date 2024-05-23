@@ -5,7 +5,7 @@ from torch.nn.utils.rnn import pack_padded_sequence
 
 class TextRNNDecoder(nn.Module):
 
-    def __init__(self, vocab_size, embed_dim, hidden_size, num_layers=4, max_len=20):
+    def __init__(self, vocab_size, embed_dim, hidden_size, num_layers=4, max_len=30):
         super().__init__()
         self.embed = nn.Embedding(vocab_size, embed_dim)
         self.lstm =  nn.LSTM(

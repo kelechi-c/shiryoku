@@ -3,6 +3,7 @@ import torch.nn as nn
 from einops import rearrange                                                  
 from image_encoder import ConvNetEncoder
 from shiryoku_v1.text_model import TextRNNDecoder
+from shiryoku_v1.dataset_prep import vocab_size
 from config import Config
 from utils_functions import *
 
@@ -12,7 +13,7 @@ class ImageTextModel(nn.Module):
         super().__init__()
         self.vision_encoder = ConvNetEncoder()
         self.text_decoder = TextRNNDecoder(
-            vocab_size=Config.vocab_size,
+            vocab_size=vocab_size,
             embed_dim=Config.embed_size,
             hidden_size=Config.hidden_size,
         )
