@@ -10,6 +10,7 @@ from collections import Counter
 from tqdm.auto import tqdm
 from config import Config
 import numpy as np
+from matplotlib import pyplot as plt
 
 
 # For image data
@@ -57,6 +58,12 @@ def load_image(url):
 
         print(f"Error loading image: {url}, {e}")
         return None
+    
+def display_image(image):
+    plt.figure(figsize=(50, 50))
+    plt.imshow(image)
+    plt.axis("off")
+    plt.show()
 
 
 # For text data
