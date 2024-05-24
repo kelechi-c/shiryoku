@@ -14,13 +14,14 @@ print(f'Captions: {len(captions)}')
 
 captions_vocab = create_vocabulary(captions)
 
-captions_vocab = captions_vocab[0]
+caption_vocab = captions_vocab[0]
+idx2word = captions_vocab[1]
 
-vocab_size = len(captions_vocab)
+vocab_size = len(caption_vocab)
 
 
 class ImageCaptionData(Dataset):
-    def __init__(self, images, captions, captions_vocab=captions_vocab, transforms=None, device=device):
+    def __init__(self, images, captions, captions_vocab=caption_vocab, transforms=None, device=device):
         super().__init__()
         self.images = images
         self.captions = captions

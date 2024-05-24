@@ -1,3 +1,4 @@
+from pprint import pprint
 import torch
 import torch.nn as nn 
 from config import Config
@@ -38,3 +39,5 @@ class TextRNNDecoder(nn.Module):
         sampled = torch.stack(sampled, 1)
 
         return sampled
+
+
