@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.nn.utils.rnn import pack_padded_sequence
+from inference import sample_run
 from shiryoku_v1.shiryoku_model import ImageTextModel
 from shiryoku_v1.dataset_prep import train_loader, valid_loader
 from utils_functions import *
@@ -10,11 +11,12 @@ from config import Config, wandb_config
 from tqdm.auto import tqdm
 import os
 
+
 import wandb
 
 wandb.login()
 
-wandb.init(project="shiryoku_vision", config=wandb_config)
+run = wandb.init(project="shiryoku_vision", name='shiryoku(image_caption)', config=wandb_config)
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
@@ -30,7 +32,7 @@ epochs = Config.num_epochs
 os.mkdir(Config.model_output_path)
 
 output_path = os.path.join(os.getcwd(), Config.model_output_path)
-
+image_folder = '/kaggle/input/shiryoku-test/test_images' 
 
 def train_step(train_loader, model):
     total_correct = 0
@@ -47,7 +49,6 @@ def train_step(train_loader, model):
         
         _, predicted = torch.max(model_outputs, 1)
 
-        # Update the running total of correct predictions and samples
         total_correct += (predicted == targets).sum().item()
         total_samples += targets.size(0)
         
@@ -94,6 +95,9 @@ def training_loop(model, train_loader, valid_loader, epochs=epochs):
         train_acc, train_loss = train_step(train_loader, model)
         valid_acc, valid_loss = validation_step(model, valid_loader)
 
+        for image_file in os.listdir(image_folder):
+            sample_run(os.path.join(image_folder, image_file), model, device)
+        
         print(
             f"Epoch {epoch} of {epochs}, train_accuracy: {train_acc:.2f}, train_loss: {train_loss.item():.4f}, valid_accuracy: {valid_acc:.2f}, val_loss: {train_loss.item():.2f}"
         )
@@ -119,3 +123,4 @@ def training_loop(model, train_loader, valid_loader, epochs=epochs):
 
 
 training_loop(shiryoku_model, train_loader, valid_loader)
+run.log_code()
