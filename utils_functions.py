@@ -11,6 +11,7 @@ from tqdm.auto import tqdm
 from config import Config
 import numpy as np
 from matplotlib import pyplot as plt
+from multiprocessing import Pool
 
 
 # For image data
@@ -58,7 +59,7 @@ def load_image(url):
 
         print(f"Error loading image: {url}, {e}")
         return None
-    
+
 
 def display_image(image):
     plt.figure(figsize=(50, 50))
@@ -101,22 +102,24 @@ def create_vocabulary(text_dataset):
     return word_to_idx, idx_to_word
 
 
-def load_moondream_dataset():
-    moondream_dataset = load_dataset("isidentical/moondream2-coyo-5M-captions")
-    md_data = moondream_dataset['train'][:1000000] # type: ignore
+def load_image_wrapper(url):
+    try:
+        image = load_image(url)
+        return image
+    except:
+        return None
 
+
+def get_moondream_dataset():
+    moondream_dataset = load_dataset("isidentical/moondream2-coyo-5M-captions")
+    md_data = moondream_dataset["train"][:100] # type: ignore
     image_urls = md_data["url"] # type: ignore
     descriptions = md_data["moondream2_caption"] # type: ignore
-    
-    for url, desc in tqdm(zip(image_urls, descriptions)):
-        try:
-            image = load_image(url)
-            caption = desc.lower()
 
-            if image is not None:
-                yield (image, caption)
+    with Pool(processes=4) as pool:  # Adjust number of processes as needed
+        images = pool.map(load_image_wrapper, image_urls)
+        captions = [desc.lower() for desc in descriptions]
 
-        except:
-            print(f"Error loading image/caption")
-            
-            continue
+    for image, caption in tqdm(zip(images, captions)):
+        if image is not None:
+            yield (image, caption)
