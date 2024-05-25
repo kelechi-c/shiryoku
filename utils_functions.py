@@ -59,6 +59,7 @@ def load_image(url):
         print(f"Error loading image: {url}, {e}")
         return None
     
+
 def display_image(image):
     plt.figure(figsize=(50, 50))
     plt.imshow(image)
@@ -100,28 +101,22 @@ def create_vocabulary(text_dataset):
     return word_to_idx, idx_to_word
 
 
-def fetch_moondream_dataset():
+def load_moondream_dataset():
     moondream_dataset = load_dataset("isidentical/moondream2-coyo-5M-captions")
     md_data = moondream_dataset['train'][:1000000] # type: ignore
 
     image_urls = md_data["url"] # type: ignore
     descriptions = md_data["moondream2_caption"] # type: ignore
-
-    for url, desc in zip(image_urls, descriptions):
-        yield url, desc
-
-
-def load_image_captions():
-    data = []
-    for image_url, desc in tqdm(fetch_moondream_dataset()):
+    
+    for url, desc in tqdm(zip(image_urls, descriptions)):
         try:
-            image = load_image(image_url)
+            image = load_image(url)
             caption = desc.lower()
-            if image is not None:
-                data.append((image, caption))
-                
-        except Exception as e:
-            print(f"Error loading image/caption: {image_url} + {e}")
-            continue
 
-    return data
+            if image is not None:
+                yield (image, caption)
+
+        except:
+            print(f"Error loading image/caption")
+            
+            continue

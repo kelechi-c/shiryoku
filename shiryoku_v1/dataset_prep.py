@@ -1,13 +1,13 @@
 import torch
 from einops import rearrange
 from torch.utils.data import Dataset, DataLoader, random_split
-from utils_functions import read_img, tokenize_text, load_image_captions
+from utils_functions import read_img, tokenize_text, load_moondream_dataset
 from config import Config
 from utils_functions import *
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-images, captions = zip(*load_image_captions())
+images, captions = zip(*load_moondream_dataset())
 
 print(f'Images: {len(images)}')
 print(f'Captions: {len(captions)}')
