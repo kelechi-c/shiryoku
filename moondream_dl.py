@@ -1,5 +1,5 @@
 from typing import List
-import urllib
+import io
 import requests
 import os
 import pandas as pd
@@ -38,6 +38,7 @@ cv2play(sample_image)
 image_folder = "moondream_images"
 out_folder = os.path.join(os.getcwd(), image_folder)
 
+
 def download_img(url):
     try:
         response_file = requests.get(url)
@@ -54,9 +55,9 @@ def download_img(url):
         print(f"error: {e}")
 
 
-def get_moondream_data():
+def get_moondream_data(split_size: int):
     moondream_dataset = load_dataset("isidentical/moondream2-coyo-5M-captions")
-    md_data = moondream_dataset["train"][:100000]  # type: ignore
+    md_data = moondream_dataset["train"][:split_size]  # type: ignore
     image_urls = md_data["url"]  # type: ignore
     descriptions = md_data["moondream2_caption"]  # type: ignore
 
@@ -65,27 +66,49 @@ def get_moondream_data():
     for url, desc in tqdm(zip(image_urls, descriptions)):
         image_dl = download_img(url)
         caption = desc.lower()
+        file_name = os.path.basename(url)
 
         count += 1
 
         if image_dl is not None:
             print(f"image no.{count}")
-            yield (image_dl, image_dl.name, caption) # type: ignore
+            yield (image_dl, file_name, caption)
 
 
-q, k, v = zip(*get_moondream_data())
+q, k, v = zip(*get_moondream_data(100000))
 
 
-def moondream_csv(path: List, url: List, desc: List, output_path: str = os.getcwd()):
+def save_images(img_generator):
+    for image_file in img_generator:
+        try:
+            image_buffer = io.BytesIO(image_file.read())
+            image = pillow_image.open(image_buffer)
+            image_path = os.path.join("images", f"{image_file.name}.png")
+            image.save(image_path)
+            print(f"{image_file.name} saved successfully.")
+        except Exception as e:
+            print(f"Error saving {image_file.name}: {e}")
+        finally:
+            image_file.close()
+
+        return image_file
+
+
+qx = [save_images(file_gen) for file_gen in q]
+
+
+def moondream_csv(path: List, desc: List):
     print("Writing to csv..")
 
-    keys = ["image_path", "image_url", "caption"]
-    md_dict = dict(zip(keys, zip(path, url, desc)))
+    md_dict = {"image_path": path, "caption": desc}
+
     moondream_df = pd.DataFrame(md_dict)
 
-    moondream_df.to_csv("moondream2.csv")
+    moondream_df.to_csv("moondream2_100k.csv", index=False)
 
     print("Csv transfer complete...")
 
 
-moondream_csv(q, k, v)
+moondream_csv(k, v)
+
+print("Kaggle moondream porting 100k complete")
