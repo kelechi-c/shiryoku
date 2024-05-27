@@ -10,13 +10,12 @@ from utils_functions import *
 from config import Config, wandb_config
 from tqdm.auto import tqdm
 import os
-
-
 import wandb
+
 
 wandb.login()
 
-run = wandb.init(project="shiryoku_vision", name='shiryoku(image_caption)', config=wandb_config)
+run = wandb.init(project="shiryoku_vision", name='shiryoku(icm)_1', config=wandb_config)
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
@@ -113,7 +112,7 @@ def training_loop(model, train_loader, valid_loader, epochs=epochs):
             print(f'Saved model checkpoint @ epoch {epoch}')
 
         wandb.log({"accuracy": train_acc, "loss": train_loss, "valid_accuracy": valid_acc, "val_loss": valid_loss})
-        print(f"Epoch {epoch} complete!")
+        print(f"Epoch @ {epoch} complete!")
 
     print(
         f"End metrics for run of {epochs}, accuracy: {train_acc:.2f}, train_loss: {train_loss.item():.4f},valid_accuracy: {valid_acc:.2f}, valid_loss: {valid_loss:.4f}"

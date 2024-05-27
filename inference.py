@@ -1,15 +1,11 @@
-from altair import Config
-from networkx import dispersion
 import torch
-from matplotlib import pyplot as plt
-from matplotlib import image as pyimg
-import cv2
+from matplotlib import pyplot as plta
+import wandb
 import numpy as np
 from einops import rearrange
 from PIL import Image as pillow_image
 from shiryoku_v1.shiryoku_model import ImageTextModel
 from utils_functions import display_image, read_img
-from config import Config
 from shiryoku_v1.dataset_prep import idx2word
 
 shiryoku_model = ImageTextModel()
@@ -20,6 +16,7 @@ model_path = 'shiryoku.pth'
 
 shiryoku_model.load_state_dict(torch.load(model_path))
 shiryoku_model.eval()
+
 def sample_run(image_file, model, device):
     image = pillow_image.open(image_file)
     image = read_img(image)
