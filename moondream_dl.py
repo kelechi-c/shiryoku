@@ -64,38 +64,48 @@ def get_moondream_data(split_size: int):
     count = 0
 
     for url, desc in tqdm(zip(image_urls, descriptions)):
-        image_dl = download_img(url)
-        caption = desc.lower()
-        file_name = os.path.basename(url)
+        url = str(url)
+        if url.endswith(("jpeg", "jpg", "png")):
 
-        count += 1
+            image_dl = download_img(url)
+            caption = desc.lower()
+            file_name = os.path.basename(url)
+
+            count += 1
+
+        else:
+            continue
 
         if image_dl is not None:
-            print(f"image no.{count}")
             yield (image_dl, file_name, caption)
+            
+    print(f"{count} images downloaded")
 
 
-q, k, v = zip(*get_moondream_data(100000))
+q, k, v = zip(*get_moondream_data(1000))
 
 
-def save_images(img_generator):
-    for image_file in img_generator:
+def save_images(file_generator):
+    for image_file in file_generator:
         try:
             image_buffer = io.BytesIO(image_file.read())
             image = pillow_image.open(image_buffer)
-            image_path = os.path.join("images", f"{image_file.name}.png")
+            
+            image_path = os.path.join("images", image_file.name)
             image.save(image_path)
             print(f"{image_file.name} saved successfully.")
+            
         except Exception as e:
-            print(f"Error saving {image_file.name}: {e}")
+            print(f"Error: {e}")
+            
         finally:
             image_file.close()
-
-        return image_file
 
 
 qx = [save_images(file_gen) for file_gen in q]
 
+
+csv_path = "moondream_2.csv"
 
 def moondream_csv(path: List, desc: List):
     print("Writing to csv..")
@@ -104,11 +114,11 @@ def moondream_csv(path: List, desc: List):
 
     moondream_df = pd.DataFrame(md_dict)
 
-    moondream_df.to_csv("moondream2_100k.csv", index=False)
+    moondream_df.to_csv(csv_path, index=False)
 
     print("Csv transfer complete...")
 
 
 moondream_csv(k, v)
 
-print("Kaggle moondream porting 100k complete")
+print("Moondream to Kaggle porting complete")
