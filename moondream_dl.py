@@ -4,10 +4,12 @@ import requests
 import os
 import pandas as pd
 import cv2
+import concurrent
 from PIL import Image as pillow_image
 from multiprocessing import Pool
 from datasets import load_dataset
 from tqdm.auto import tqdm
+from concurrent.futures import ThreadPoolExecutor
 
 def load_image(url):
     try:
@@ -49,7 +51,6 @@ def download_img(url):
             image_file.write(response_file.content)
             yield image_file
 
-            print(f"{out_file} downloaded")
 
     except Exception as e:
         print(f"error: {e}")
@@ -63,7 +64,7 @@ def get_moondream_data(split_size: int):
 
     count = 0
 
-    for url, desc in tqdm(zip(image_urls, descriptions)):
+    for url, desc in tqdm(zip(image_urls, descriptions), total=split_size):
         url = str(url)
         if url.endswith(("jpeg", "jpg", "png")):
 
@@ -86,23 +87,28 @@ q, k, v = zip(*get_moondream_data(1000))
 
 
 def save_images(file_generator):
-    for image_file in file_generator:
-        try:
+    for image_file in tqdm(enumerate(file_generator)):
+        image_path = os.path.join(out_folder, image_file.name) # type: ignore
+
+        with open(image_path, "rb") as image_file:
             image_buffer = io.BytesIO(image_file.read())
-            image = pillow_image.open(image_buffer)
-            
-            image_path = os.path.join("images", image_file.name)
-            image.save(image_path)
-            print(f"{image_file.name} saved successfully.")
-            
-        except Exception as e:
-            print(f"Error: {e}")
-            
-        finally:
-            image_file.close()
+
+        with open(image_path, "wb") as f:
+            f.write(image_buffer.getbuffer())
+
+        image_file.close()
 
 
-qx = [save_images(file_gen) for file_gen in q]
+def threaded_image_saving(file_generator, max_workers=6):
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = [
+            executor.submit(save_images, image_file) for image_file in file_generator
+        ]
+        for _ in concurrent.futures.as_completed(futures):
+            pass
+
+
+saved_images = [threaded_image_saving(file_gen) for file_gen in q]
 
 
 csv_path = "moondream_2.csv"
