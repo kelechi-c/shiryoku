@@ -1,9 +1,9 @@
 from typing import List
 import io
+import re
 import requests
 import os
 import pandas as pd
-import cv2
 import concurrent
 from PIL import Image as pillow_image
 from multiprocessing import Pool
@@ -25,26 +25,23 @@ def load_image(url):
 sample_image = "ignore/images/laptoppic.jpeg"
 
 
-def cv2play(image_file):
-    image = cv2.imread(image_file)
-
-    cv2.imshow("Laptop", image)
-    cv2.waitKey(0)
-    
-    return image
-
-cv2play(sample_image)
-
-
-# Download single images
 image_folder = "moondream_images"
 out_folder = os.path.join(os.getcwd(), image_folder)
+
+
+def format_filename(filename):
+    name, ext = os.path.splitext(filename)
+    pattern = r"[^\w\-]"
+    
+    formatted_filename = re.sub(pattern, "", name)
+
+    return formatted_filename + ext
 
 
 def download_img(url):
     try:
         response_file = requests.get(url)
-        out_file = os.path.basename(url)
+        out_file = format_filename(os.path.basename(url))
         out_path = os.path.join(out_folder, out_file)
 
         with open(out_path, "wb") as image_file:
@@ -70,7 +67,7 @@ def get_moondream_data(split_size: int):
 
             image_dl = download_img(url)
             caption = desc.lower()
-            file_name = os.path.basename(url)
+            file_name = format_filename(os.path.basename(url))
 
             count += 1
 
@@ -99,7 +96,7 @@ def save_images(file_generator):
         image_file.close()
 
 
-def threaded_image_saving(file_generator, max_workers=6):
+def threaded_image_saving(file_generator, max_workers=4):
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = [
             executor.submit(save_images, image_file) for image_file in file_generator

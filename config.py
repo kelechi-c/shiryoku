@@ -7,7 +7,7 @@ class Config:
     batch_size = 64
     top_k = 2
     num_experts = 4
-    image_size = 224
+    image_size = 128
     train_size = 0.95
     embed_size = 512
     hidden_size = 1024

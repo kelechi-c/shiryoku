@@ -1,4 +1,5 @@
 import cv2
+import os
 import nltk
 from datasets import load_dataset
 import requests
@@ -10,6 +11,7 @@ from collections import Counter
 from tqdm.auto import tqdm
 from config import Config
 import numpy as np
+import pandas as pd
 from matplotlib import pyplot as plt
 from multiprocessing import Pool
 
@@ -101,25 +103,16 @@ def create_vocabulary(text_dataset):
 
     return word_to_idx, idx_to_word
 
-
-def load_image_wrapper(url):
-    try:
-        image = load_image(url)
-        return image
-    except:
-        return None
+# Data from prepared dataset
 
 
-def get_moondream_dataset():
-    moondream_dataset = load_dataset("isidentical/moondream2-coyo-5M-captions")
-    md_data = moondream_dataset["train"][:100] # type: ignore
-    image_urls = md_data["url"] # type: ignore
-    descriptions = md_data["moondream2_caption"] # type: ignore
+def load_images_from_directory(csv_file):
+    image_folder = ''
+    data = pd.read_csv(csv_file).drop_duplicates(keep='first')
+    paths = data['image_path']
+    
+    captions = data['caption']
 
-    with Pool(processes=4) as pool:  # Adjust number of processes as needed
-        images = pool.map(load_image_wrapper, image_urls)
-        captions = [desc.lower() for desc in descriptions]
-
-    for image, caption in tqdm(zip(images, captions)):
-        if image is not None:
-            yield (image, caption)
+    image_paths = [os.path.join(image_folder, file) for file in paths]
+    
+    return image_paths, captions
