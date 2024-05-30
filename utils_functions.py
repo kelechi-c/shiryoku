@@ -30,37 +30,18 @@ def image_transforms():
     return trasnformed_image
 
 
+
 def read_img(image_data):
-    if isinstance(image_data, str):
-        # Assume image_data is a file path
-        image = cv2.imread(image_data)
-    elif isinstance(image_data, bytes):
-        # Assume image_data is binary data
-        image = cv2.imdecode(np.frombuffer(image_data, np.uint8), cv2.IMREAD_COLOR)
-    elif isinstance(image_data, pillow_image.Image):
-        # Assume image_data is a PIL Image object
-        image = cv2.cvtColor(np.array(image_data), cv2.COLOR_RGB2BGR)
+    image = cv2.imread(image_data)
         
     if image is None:
         raise ValueError("Could not read the image data.")
 
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    image = cv2.resize(image, (224, 224))
+    image = cv2.resize(image, (200, 200))
     image = np.array(image, dtype=np.float32) / 255.0  # Normalize the image
     return image
 
-
-def load_image(url):
-    try:
-        # Attempt to load image from URL
-        url_content = requests.get(url, stream=True).raw
-        image = pillow_image.open(url_content)
-        return image
-
-    except Exception as e:
-
-        print(f"Error loading image: {url}, {e}")
-        return None
 
 
 def display_image(image):

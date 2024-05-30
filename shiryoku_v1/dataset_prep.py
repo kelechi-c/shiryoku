@@ -1,4 +1,5 @@
 import torch
+import math
 from einops import rearrange
 from torch.utils.data import Dataset, DataLoader, random_split
 from utils_functions import read_img, tokenize_text, load_images_from_directory
@@ -93,7 +94,7 @@ class ImageCaptionData(Dataset):
 
 dataset = ImageCaptionData(images=image_paths, captions=captions)
 
-train_size = 0.90 * len(dataset)
+train_size = math.floor(len(dataset) * 0.8)
 val_size = len(dataset) - train_size
 
 train_data, valid_data = random_split(dataset, (train_size, val_size))

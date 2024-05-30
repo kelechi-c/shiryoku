@@ -1,6 +1,4 @@
 import torch
-from matplotlib import pyplot as plta
-import wandb
 import numpy as np
 from einops import rearrange
 from PIL import Image as pillow_image
@@ -18,8 +16,9 @@ shiryoku_model.load_state_dict(torch.load(model_path))
 shiryoku_model.eval()
 
 def sample_run(image_file, model, device):
-    image = pillow_image.open(image_file)
-    image = read_img(image)
+    model.eval()
+    
+    image = read_img(image_file)
     model.eval()
 
     model = model.to(device)
