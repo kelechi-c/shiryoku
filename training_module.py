@@ -15,7 +15,7 @@ import wandb
 
 wandb.login()
 
-run = wandb.init(project="shiryoku_vision", name='shiryoku(icm)_1', config=wandb_config)
+run = wandb.init(project="shiryoku_vision", name='shiryoku1', config=wandb_config)
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 

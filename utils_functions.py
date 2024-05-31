@@ -1,18 +1,18 @@
 import cv2
 import os
+import re
 import nltk
+import PIL.Image as pillow_image
+import numpy as np
+import pandas as pd
 from datasets import load_dataset
 from base64 import b64decode
 from io import BytesIO
-import PIL.Image as pillow_image
 from nltk import tokenize
 from torchvision import transforms
-import re
 from collections import Counter
 from tqdm.auto import tqdm
 from config import Config
-import numpy as np
-import pandas as pd
 from matplotlib import pyplot as plt
 
 

@@ -49,18 +49,6 @@ class ImageCaptionData(Dataset):
         self.vocab = captions_vocab
         self.max_caption_length = max(len(tokenize_caption(caption, captions_vocab)) for caption in captions)
 
-        # for img, caption in zip(images, captions):
-        #     try:
-        #         _ = read_img(img)  # Try to read the image to validate it
-        #         self.images.append(img)
-        #         self.captions.append(caption)
-        #         caption_length = len(tokenize_caption(caption, caption_vocab))
-        #         if caption_length > self.max_caption_length:
-        #             self.max_caption_length = caption_length
-        #     except Exception as e:
-        #         print(f"Skipping invalid image {img}: {e}")
-        #         continue
-
     def __len__(self):
         return len(self.images)
 
@@ -70,16 +58,13 @@ class ImageCaptionData(Dataset):
             image = cv_decode_image(self.images[idx])
         except Exception as e:
             print(f"Error reading image at index {idx}: {e}")
-            # return None, None, None
 
         if self.transform:
             image = self.transform(image)
 
-        # print(f"B4 tensorizing: {image.shape}")
         torch.from_numpy(image)
         image = torch.tensor(image, dtype=torch.float32).to(self.device)
         image = rearrange(image, "h w c -> c h w")
-        # print(f"After tensorizing: {image.shape}")
 
         # caption
         vocab = self.vocab
@@ -95,7 +80,7 @@ class ImageCaptionData(Dataset):
         return image, caption, length
 
 
-dataset = ImageCaptionData(images=image_paths, captions=captions)
+dataset = ImageCaptionData(images=image_strings, captions=captions)
 
 train_size = math.floor(len(dataset) * 0.8)
 val_size = len(dataset) - train_size
