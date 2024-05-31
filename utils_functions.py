@@ -2,7 +2,8 @@ import cv2
 import os
 import nltk
 from datasets import load_dataset
-import requests
+from base64 import b64decode
+from io import BytesIO
 import PIL.Image as pillow_image
 from nltk import tokenize
 from torchvision import transforms
@@ -13,12 +14,11 @@ from config import Config
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
-from multiprocessing import Pool
 
 
 # For image data
 def image_transforms():
-    trasnformed_image = transforms.Compose(
+    transformed_image = transforms.Compose(
         [
             transforms.RandomCrop(Config.image_size),
             transforms.RandomHorizontalFlip(),
@@ -27,8 +27,7 @@ def image_transforms():
         ]
     )
 
-    return trasnformed_image
-
+    return transformed_image
 
 
 def read_img(image_data):
@@ -41,7 +40,6 @@ def read_img(image_data):
     image = cv2.resize(image, (200, 200))
     image = np.array(image, dtype=np.float32) / 255.0  # Normalize the image
     return image
-
 
 
 def display_image(image):
@@ -97,3 +95,35 @@ def load_images_from_directory(csv_file):
     image_paths = [os.path.join(image_folder, file) for file in paths]
     
     return image_paths, captions
+
+
+def load_mit_dataset():
+
+    ds_name = "coco"  # change the dataset name here
+    dataset = load_dataset("MMInstruction/M3IT", ds_name)
+    train_set = dataset["train"] # type: ignore
+    validation_set = dataset["validation"] # type: ignore
+
+    return train_set, validation_set
+
+
+def cv_decode_image(image64_str):
+    image = BytesIO(b64decode(image64_str))
+    image = pillow_image.open(image)
+    image = np.array(image)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    image = cv2.resize(image, (200, 200))
+    image = np.array(image, dtype=np.float32) / 255.0
+    
+    return image
+
+
+def retrieve_data(dataset):
+
+    for k in tqdm(range(len(dataset))):
+
+        _, _, image, _ = dataset[k]
+
+        captext = dataset[k]["outputs"]
+
+        yield (image, captext)

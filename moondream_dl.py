@@ -105,6 +105,7 @@ def threaded_image_saving(file_generator, max_workers=4):
             pass
 
 
+
 saved_images = [threaded_image_saving(file_gen) for file_gen in q]
 
 
