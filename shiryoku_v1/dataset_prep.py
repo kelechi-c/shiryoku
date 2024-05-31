@@ -2,7 +2,7 @@ import torch
 import math
 from einops import rearrange
 from torch.utils.data import Dataset, DataLoader, random_split
-from utils_functions import read_img, tokenize_text, load_images_from_directory
+from utils_functions import read_img, tokenize_text
 from config import Config
 from utils_functions import *
 
@@ -10,9 +10,12 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 csv_file = "/kaggle/input/md-data-500/moondream2.csv"
 
-image_paths, captions = load_images_from_directory(csv_file)
+train_data = load_mit_dataset()
 
-print(f'Images: {len(image_paths)}')
+image_strings, captions = zip(*retrieve_data(train_data))
+
+
+print(f'Images: {len(image_strings)}')
 print(f'Captions: {len(captions)}')
 
 captions_vocab = create_vocabulary(captions)
@@ -39,32 +42,32 @@ def tokenize_caption(caption, vocab):
 class ImageCaptionData(Dataset):
     def __init__(self, images, captions, captions_vocab=caption_vocab, transforms=None, device=device):
         super().__init__()
-        self.images = []
-        self.captions = []
+        self.images = images
+        self.captions = captions
         self.transform = transforms
         self.device = device
         self.vocab = captions_vocab
+        self.max_caption_length = max(len(tokenize_caption(caption, captions_vocab)) for caption in captions)
 
-        for img, caption in zip(images, captions):
-            try:
-                _ = read_img(img)  # Try to read the image to validate it
-                self.images.append(img)
-                self.captions.append(caption)
-                caption_length = len(tokenize_caption(caption, caption_vocab))
-                if caption_length > self.max_caption_length:
-                    self.max_caption_length = caption_length
-            except Exception as e:
-                print(f"Skipping invalid image {img}: {e}")
-                continue
+        # for img, caption in zip(images, captions):
+        #     try:
+        #         _ = read_img(img)  # Try to read the image to validate it
+        #         self.images.append(img)
+        #         self.captions.append(caption)
+        #         caption_length = len(tokenize_caption(caption, caption_vocab))
+        #         if caption_length > self.max_caption_length:
+        #             self.max_caption_length = caption_length
+        #     except Exception as e:
+        #         print(f"Skipping invalid image {img}: {e}")
+        #         continue
 
     def __len__(self):
         return len(self.images)
 
     def __getitem__(self, idx):
         # Images
-
         try:
-            image = read_img(self.images[idx])
+            image = cv_decode_image(self.images[idx])
         except Exception as e:
             print(f"Error reading image at index {idx}: {e}")
             # return None, None, None
