@@ -26,7 +26,7 @@ class ConvNetEncoder(nn.Module):
         return encoded_image
 
 
-class PretrainedConvNet(nn.Module):
+class ResConvNet(nn.Module):
     def __init__(self, embed_size):
         super().__init__()
         resnet = models.resnet152(pretrained=True)
