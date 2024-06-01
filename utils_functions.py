@@ -17,19 +17,6 @@ from matplotlib import pyplot as plt
 
 
 # For image data
-def image_transforms():
-    transformed_image = transforms.Compose(
-        [
-            transforms.RandomCrop(Config.image_size),
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
-        ]
-    )
-
-    return transformed_image
-
-
 def read_img(image_data):
     image = cv2.imread(image_data)
         
@@ -37,7 +24,7 @@ def read_img(image_data):
         raise ValueError("Could not read the image data.")
 
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    image = cv2.resize(image, (200, 200))
+    image = cv2.resize(image, (180, 180))
     image = np.array(image, dtype=np.float32) / 255.0  # Normalize the image
     return image
 
