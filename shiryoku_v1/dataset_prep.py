@@ -59,10 +59,6 @@ class ImageCaptionData(Dataset):
         except Exception as e:
             print(f"Error reading image at index {idx}: {e}")
 
-        if self.transform:
-            image = self.transform(image)
-
-        torch.from_numpy(image)
         image = torch.tensor(image, dtype=torch.float32).to(self.device)
         image = rearrange(image, "h w c -> c h w")
 
